@@ -3,7 +3,10 @@
 import React, { useState } from "react";
 import logo from "./logo.svg";
 import "./App.css";
+
+
 import firebase from "./firebase";
+import axios from "axios";
 
 function App() {
   const [values, setValues] = useState({
@@ -14,6 +17,8 @@ function App() {
   });
 
   const handleChange = () => {
+
+    // Here We are uploading photo to firebase storage
     let bucketName = "orbital-photo";
 
     // This is the detail of photo which is being stored
@@ -21,22 +26,27 @@ function App() {
 
     let storageRef = firebase.storage().ref(`${bucketName}/${file.name}`);
 
-    let uploadTask = storageRef.put(file).then((path) => {
-      storageRef.getDownloadURL().then((url) => {
-        firebase
-          .firestore()
-          .collection("data")
-          .doc()
-          .set({
-            name: values.name,
-            number: values.number,
-            photo: url,
-            quality: values.quality,
+    let uploadTask = storageRef
+      .put(file)
+      .then((path) => {
+        storageRef
+          .getDownloadURL()
+          .then((url) => {
+
+            // We get the URL of image and sending all data entered on form to realtime database
+            axios
+              .post("https://form-data-c5373.firebaseio.com/formdata.json", {
+                name: values.name,
+                number: values.number,
+                photo: url,
+                quality: values.quality,
+              })
+              .then((data) => alert("You have Successfully Stored data!"))
+              .catch((err) => alert("Something went wrong!"));
           })
-          .then((data) => alert("You have Successfully Stored data!"))
-          .catch((err) => alert("Something went wrong!"));
-      }).catch(err => console.log(err))
-    }).catch(err => console.log(err));
+          .catch((err) => console.log(err));
+      })
+      .catch((err) => console.log(err));
   };
 
   return (
